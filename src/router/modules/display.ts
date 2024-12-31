@@ -50,7 +50,7 @@ export default {
       name: "DisplayLine",
       component: () => import("@/views/display/line.vue"),
       meta: {
-        title: "日历热力图"
+        title: "折线图"
       }
     }
   ]
