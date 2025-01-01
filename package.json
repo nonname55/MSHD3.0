@@ -29,6 +29,7 @@
     "not op_mini all"
   ],
   "dependencies": {
+    "@amap/amap-jsapi-loader": "^1.0.1",
     "@pureadmin/descriptions": "^1.1.1",
     "@pureadmin/table": "^2.3.2",
     "@pureadmin/utils": "^1.9.6",
