@@ -1,19 +1,19 @@
 export default {
-  path: "/error",
-  redirect: "/error/403",
+  path: "/ai",
+  redirect: "/ai/classify",
   meta: {
     icon: "informationLine",
-    title: "异常页面",
+    title: "AI赋能",
     // showLink: false,
     rank: 9
   },
   children: [
     {
-      path: "/error/403",
-      name: "403",
-      component: () => import("@/views/error/403.vue"),
+      path: "/ai/classify",
+      name: "图片分类",
+      component: () => import("@/views/ai/classify.vue"),
       meta: {
-        title: "403"
+        title: "图片分类"
       }
     },
     {

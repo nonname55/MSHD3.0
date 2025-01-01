@@ -1,8 +1,10 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import os
 from werkzeug.utils import secure_filename
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # 允许上传的图片格式
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -11,8 +13,8 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/upload_image', methods=['POST'])
-def upload_image():
+@app.route('/classify', methods=['POST'])
+def classify():
     # 打印请求信息，用于调试
     print("收到的请求头:", dict(request.headers))
     print("收到的文件:", request.files)
@@ -37,11 +39,15 @@ def upload_image():
             # 保存文件到当前目录
             save_path = os.path.join(os.getcwd(), filename)
             file.save(save_path)
-            return {
-                'message': '图片上传成功',
-                'filename': filename,
-                'field_name_used': field_name
-            }
+            return jsonify({
+                'code': 200,
+                'msg': '上传成功',
+                'success': True,
+                'url': f'/uploads/{filename}',  # 文件访问路径
+                'data': {
+                    'filename': filename
+                }
+            })
         else:
             return {'error': f'不允许的文件类型: {file.filename}'}, 400
     
