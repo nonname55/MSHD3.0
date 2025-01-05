@@ -21,3 +21,4 @@ tests/**/coverage/
 tsconfig.tsbuildinfo
 
 backend/.venv
+backend/CDD
