@@ -124,7 +124,7 @@ const submitUpload = async () => {
 
     formData.append('file', file)
     
-    const response = await axios.post('http://localhost:5000/classify', formData, {
+    const response = await axios.post('http://localhost:5000/classify/image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
