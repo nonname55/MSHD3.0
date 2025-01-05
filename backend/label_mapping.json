@@ -1,0 +1,1 @@
+{"label_to_idx": {"Damaged_Infrastructure": 0, "Fire_Disaster": 1, "Human_Damage": 2, "Land_Disaster": 3, "Non_Damage": 4, "Water_Disaster": 5}, "idx_to_label": {"0": "Damaged_Infrastructure", "1": "Fire_Disaster", "2": "Human_Damage", "3": "Land_Disaster", "4": "Non_Damage", "5": "Water_Disaster"}}

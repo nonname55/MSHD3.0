@@ -47,6 +47,8 @@
         </template>
         <div class="result-content">
           <p class="prediction-text">{{ predictionResult }}</p>
+          <p class="prediction-text">{{ predictionConfidence }}</p>
+          <p class="prediction-text">{{ predictionFileName }}</p>
           <div class="timestamp">预测时间: {{ predictionTime }}</div>
         </div>
       </el-card>
@@ -63,6 +65,8 @@ import axios from 'axios'
 const upload = ref<UploadInstance>()
 const fileList = ref<UploadUserFile[]>([])
 const predictionResult = ref<string>('')
+const predictionConfidence = ref<string>('')
+const predictionFileName = ref<string>('')
 const predictionTime = ref<string>('')
 
 const beforeUpload = (file: UploadRawFile) => {
@@ -86,6 +90,8 @@ const handleChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
   }
   fileList.value = [...uploadFiles]
   predictionResult.value = ''
+  predictionConfidence.value = ''
+  predictionFileName.value = ''
   predictionTime.value = ''
 }
 
@@ -126,7 +132,10 @@ const submitUpload = async () => {
 
     console.log('后端返回的内容:', response.data)
     
-    predictionResult.value = response.data.msg || response.data
+    const { predicted_class, confidence, filename } = response.data.data
+    predictionResult.value = `预测标签: ${predicted_class}`
+    predictionConfidence.value = `置信度: ${confidence}`
+    predictionFileName.value = `文件名: ${filename}`
     predictionTime.value = formatDateTime()
 
   } catch (error: any) {
@@ -134,48 +143,6 @@ const submitUpload = async () => {
     ElMessage.error(`上传失败: ${error.response?.data?.message || error.message}`)
   }
 }
-
-// 方法2：使用 XMLHttpRequest (如果 axios 不可用可以用这个替代)
-/*
-const submitUpload = () => {
-  if (fileList.value.length === 0) {
-    ElMessage.warning('请先选择文件')
-    return
-  }
-
-  const formData = new FormData()
-  const file = fileList.value[0].raw
-  if (!file) {
-    ElMessage.error('文件获取失败')
-    return
-  }
-
-  formData.append('file', file)
-
-  const xhr = new XMLHttpRequest()
-  
-  xhr.open('POST', 'http://localhost:5000/classify', true)
-  
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      const response = JSON.parse(xhr.responseText)
-      console.log('后端返回的内容:', response)
-      predictionResult.value = response.msg || response
-      predictionTime.value = formatDateTime()
-    } else {
-      console.error('上传失败:', xhr.statusText)
-      ElMessage.error(`上传失败: ${xhr.statusText}`)
-    }
-  }
-
-  xhr.onerror = function() {
-    console.error('上传失败')
-    ElMessage.error('上传失败: 网络错误')
-  }
-
-  xhr.send(formData)
-}
-*/
 </script>
 
 <style scoped>
