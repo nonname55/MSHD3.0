@@ -21,4 +21,4 @@ tests/**/coverage/
 tsconfig.tsbuildinfo
 
 backend/.venv
-backend/CDD
+backend/classify/CDD

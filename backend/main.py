@@ -15,7 +15,7 @@ CORS(app)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 # 加载标签映射
-with open('label_mapping.json', 'r') as f:
+with open('./classify/label_mapping.json', 'r') as f:
     label_mapping = json.load(f)
     idx_to_label = label_mapping['idx_to_label']
 
@@ -33,7 +33,7 @@ class DisasterClassifier(nn.Module):
 def load_model():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = DisasterClassifier(len(idx_to_label))
-    model.load_state_dict(torch.load('best_model.pth', map_location=device))
+    model.load_state_dict(torch.load('./classify/best_model.pth', map_location=device, weights_only=True))
     model.eval()
     model.to(device)
     return model
