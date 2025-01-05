@@ -1,37 +1,77 @@
 <template>
-  <el-upload
-    ref="upload"
-    class="upload-demo"
-    action="http://localhost:5000/classify"
-    :limit="1"
-    :on-exceed="handleExceed"
-    :auto-upload="false"
-    :on-success="handleSuccess"
-    :on-change="handleChange"
-    :file-list="fileList"
-    list-type="picture"
-  >
-    <template #trigger>
-      <el-button type="primary">select file</el-button>
-    </template>
-    <el-button class="ml-3" type="success" native-type="button" @click="submitUpload($event)">
-      upload to server
+  <div class="upload-container">
+    <el-upload
+      ref="upload"
+      class="upload-demo"
+      action="#"
+      :auto-upload="false"
+      :limit="1"
+      :on-exceed="handleExceed"
+      :on-change="handleChange"
+      :file-list="fileList"
+      :http-request="customUpload"
+      list-type="picture"
+      :before-upload="beforeUpload"
+    >
+      <template #trigger>
+        <el-button type="primary">选择文件</el-button>
+      </template>
+    </el-upload>
+   
+    <el-button
+      class="ml-3"
+      type="success"
+      @click.prevent="submitUpload"
+      :disabled="fileList.length === 0"
+    >
+      上传到服务器
     </el-button>
-    <template #tip>
-      <div class="el-upload__tip text-red">
-        limit 1 file, new file will cover the old file
-      </div>
-    </template>
-  </el-upload>
+
+    <div class="el-upload__tip text-red mt-2">
+      限制1个文件
+    </div>
+
+    <!-- Result Display Section -->
+    <div v-if="predictionResult" class="result-container">
+      <el-card class="result-card">
+        <template #header>
+          <div class="card-header">
+            <span class="title">预测结果</span>
+            <el-tag 
+              :type="predictionResult ? 'success' : 'info'"
+              class="ml-2"
+            >
+              {{ fileList[0]?.name || '未知文件' }}
+            </el-tag>
+          </div>
+        </template>
+        <div class="result-content">
+          <p class="prediction-text">{{ predictionResult }}</p>
+          <div class="timestamp">预测时间: {{ predictionTime }}</div>
+        </div>
+      </el-card>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { genFileId, ElMessage } from 'element-plus'  // 正确导入 ElMessage
+import { genFileId, ElMessage } from 'element-plus'
 import type { UploadInstance, UploadProps, UploadRawFile, UploadUserFile } from 'element-plus'
+import axios from 'axios'
 
 const upload = ref<UploadInstance>()
 const fileList = ref<UploadUserFile[]>([])
+const predictionResult = ref<string>('')
+const predictionTime = ref<string>('')
+
+const beforeUpload = (file: UploadRawFile) => {
+  return false
+}
+
+const customUpload = async (options: any) => {
+  return false
+}
 
 const handleExceed: UploadProps['onExceed'] = (files) => {
   upload.value!.clearFiles()
@@ -40,69 +80,151 @@ const handleExceed: UploadProps['onExceed'] = (files) => {
   upload.value!.handleStart(file)
 }
 
-const handleSuccess: UploadProps['onSuccess'] = (
-  response,
-  uploadFile,
-  uploadFiles
-) => {
-  if (uploadFile.raw) {
-    uploadFile.url = URL.createObjectURL(uploadFile.raw)
-  }
-  fileList.value = [...uploadFiles]
-}
-
 const handleChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
   if (uploadFile.raw) {
     uploadFile.url = URL.createObjectURL(uploadFile.raw)
   }
   fileList.value = [...uploadFiles]
+  predictionResult.value = ''
+  predictionTime.value = ''
 }
 
-const submitUpload = async (event) => {
-  if (event) {
-    event.preventDefault(); // 阻止默认行为
-  }
+const formatDateTime = () => {
+  const now = new Date()
+  return now.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
+}
 
-  // 如果没有选择文件，给出提示
-  if (fileList.value.length === 0) {
-    ElMessage.warning('请先选择文件');
-    return;
-  }
-
-  // 创建 FormData
-  const formData = new FormData();
-  const file = fileList.value[0].raw; // 获取原始文件
-  if (file) {
-    formData.append('file', file);
-  }
-
+// 方法1：使用 axios
+const submitUpload = async () => {
   try {
-    // 发起上传请求
-    const response = await fetch('http://localhost:5000/classify', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (fileList.value.length === 0) {
+      ElMessage.warning('请先选择文件')
+      return
     }
 
-    // 解析返回的 JSON 数据
-    const result = await response.json();
+    const formData = new FormData()
+    const file = fileList.value[0].raw
+    if (!file) {
+      ElMessage.error('文件获取失败')
+      return
+    }
 
-    // 打印后端返回的内容
-    console.log('后端返回的内容:', result);
+    formData.append('file', file)
+    
+    const response = await axios.post('http://localhost:5000/classify', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
 
-    // 根据返回内容给用户提示
-    ElMessage.success({
-      message: `分类结果: ${result.msg || result}`,
-      duration: 5000  // 设置持续时间为 5 秒（5000 毫秒）
-    });
-  } catch (error) {
-    console.error('上传失败:', error);
-    ElMessage.error(`上传失败: ${error.message}`);
+    console.log('后端返回的内容:', response.data)
+    
+    predictionResult.value = response.data.msg || response.data
+    predictionTime.value = formatDateTime()
+
+  } catch (error: any) {
+    console.error('上传失败:', error)
+    ElMessage.error(`上传失败: ${error.response?.data?.message || error.message}`)
   }
-};
+}
 
+// 方法2：使用 XMLHttpRequest (如果 axios 不可用可以用这个替代)
+/*
+const submitUpload = () => {
+  if (fileList.value.length === 0) {
+    ElMessage.warning('请先选择文件')
+    return
+  }
 
+  const formData = new FormData()
+  const file = fileList.value[0].raw
+  if (!file) {
+    ElMessage.error('文件获取失败')
+    return
+  }
+
+  formData.append('file', file)
+
+  const xhr = new XMLHttpRequest()
+  
+  xhr.open('POST', 'http://localhost:5000/classify', true)
+  
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      const response = JSON.parse(xhr.responseText)
+      console.log('后端返回的内容:', response)
+      predictionResult.value = response.msg || response
+      predictionTime.value = formatDateTime()
+    } else {
+      console.error('上传失败:', xhr.statusText)
+      ElMessage.error(`上传失败: ${xhr.statusText}`)
+    }
+  }
+
+  xhr.onerror = function() {
+    console.error('上传失败')
+    ElMessage.error('上传失败: 网络错误')
+  }
+
+  xhr.send(formData)
+}
+*/
 </script>
+
+<style scoped>
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 500px;
+}
+
+.el-upload-list {
+  margin: 10px 0;
+}
+
+.result-container {
+  margin-top: 20px;
+}
+
+.result-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.result-content {
+  padding: 10px 0;
+}
+
+.prediction-text {
+  font-size: 18px;
+  color: #409EFF;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: #909399;
+  text-align: right;
+}
+</style>

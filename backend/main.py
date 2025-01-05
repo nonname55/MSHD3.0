@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-import os
-from werkzeug.utils import secure_filename
 from flask_cors import CORS
+import io
+from PIL import Image  # 用于读取图片数据
 
 app = Flask(__name__)
 CORS(app)
@@ -18,11 +18,6 @@ def classify():
     # 打印请求信息，用于调试
     print("收到的请求头:", dict(request.headers))
     print("收到的文件:", request.files)
-    print("收到的表单数据:", request.form)
-    
-    # 检查所有上传的文件
-    for field_name, file in request.files.items():
-        print(f"字段名: {field_name}, 文件名: {file.filename}")
     
     # 获取第一个上传的文件，无论字段名是什么
     if len(request.files) > 0:
@@ -35,19 +30,30 @@ def classify():
         
         # 检查是否是允许的文件类型
         if allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            # 保存文件到当前目录
-            save_path = os.path.join(os.getcwd(), filename)
-            file.save(save_path)
-            return jsonify({
-                'code': 200,
-                'msg': '上传成功',
-                'success': True,
-                'url': f'/uploads/{filename}',  # 文件访问路径
-                'data': {
-                    'filename': filename
-                }
-            })
+            # 读取文件内容到内存
+            file_bytes = file.read()
+            
+            try:
+                # 使用 PIL 打开图片以验证是否为有效图片
+                image = Image.open(io.BytesIO(file_bytes))
+                
+                # 这里可以添加你的图片分类代码
+                # 示例：返回一个模拟的分类结果
+                return jsonify({
+                    'code': 200,
+                    'msg': '图片分类完成',  # 这里可以替换为实际的分类结果
+                    'success': True,
+                    'data': {
+                        'filename': file.filename,
+                        'size': len(file_bytes),
+                        'format': image.format,
+                        'mode': image.mode,
+                        'dimensions': image.size
+                    }
+                })
+            
+            except Exception as e:
+                return {'error': f'图片处理失败: {str(e)}'}, 400
         else:
             return {'error': f'不允许的文件类型: {file.filename}'}, 400
     
