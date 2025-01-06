@@ -22,5 +22,6 @@ tsconfig.tsbuildinfo
 
 backend/.venv
 backend/classify/image/CDD
+backend/classify/image/best_model.pth
 backend/classify/tweet/best_disaster_model.pth
 backend/classify/tweet/tweet_tokenizer
